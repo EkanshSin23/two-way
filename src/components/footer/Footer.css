@@ -1,0 +1,56 @@
+.footer_container {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    background: #f0eded2e;
+    padding: 10px 20px;
+    position: absolute;
+    width: 97%;
+    bottom: 0;
+    -webkit-box-shadow: 1px -10px 18px 8px rgba(240, 237, 237, 1);
+    -moz-box-shadow: 1px -10px 18px 8px rgba(240, 237, 237, 1);
+    box-shadow: 1px -10px 18px 8px rgba(240, 237, 237, 1);
+}
+
+.footer_left {
+    display: flex;
+    gap: 10px;
+
+}
+
+.footer_mic,
+.footer_video,
+.footer_screenshare,
+.footer_emoji,
+.footer_exit,
+.footer_graph,
+.footer_chat,
+.footer_participants,
+.footer_more {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid black;
+    border-radius: 5px;
+    cursor: pointer;
+
+
+}
+
+.footer_middle {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.footer_exit {
+    background-color: red;
+    border: none;
+}
+
+.footer_right {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}

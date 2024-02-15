@@ -1,0 +1,123 @@
+.chat_parent_container {
+    position: relative;
+
+    min-height: 80vh;
+    max-height: 80vh;
+    margin-right: 40px;
+    -webkit-box-shadow: 1px -10px 18px 8px rgba(240, 237, 237, 1);
+    -moz-box-shadow: 1px -10px 18px 8px rgba(240, 237, 237, 1);
+    box-shadow: 1px -10px 18px 8px rgba(240, 237, 237, 1);
+    border-radius: 10px;
+    padding: 0 20px;
+    /* margin-top: 50px; */
+}
+
+.chat_top {
+    display: flex;
+    /* align-items: center; */
+    justify-content: center;
+    gap: 20px;
+    position: absolute;
+    top: 20px;
+    left: 50px;
+    width: 70%;
+    padding: 3px;
+    border-radius: 5px;
+    background-color: #b042f5;
+}
+
+.chat_top div {
+    cursor: pointer;
+    width: 100%;
+    border-radius: 5px;
+}
+
+/* .chat_top>span {
+    background-color: white !important;
+} */
+
+.participants_container,
+.chat_container_chats {
+
+    position: absolute;
+    top: 60px;
+
+}
+
+.chat_container_chats {
+    position: relative;
+}
+
+.input_box {
+    position: absolute;
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 90% !important;
+    background: #deb1fb85 !important;
+    position: absolute;
+    top: 10px;
+    border-radius: 50x !important;
+    padding: 5px 10px;
+    margin-right: 10px;
+}
+
+.input_box input {
+    border: none;
+    background-color: transparent;
+    height: 35px;
+    width: 100%;
+    outline: none;
+}
+
+.input_box_icons {
+    display: flex;
+    gap: 10px;
+}
+
+
+.particpants_container_participants {
+    position: relative;
+    width: 100%;
+
+}
+
+.participant_search_box {
+    position: absolute;
+
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    /* width: 90% !important; */
+    background: #deb1fb85 !important;
+    padding: 5px 10px;
+    margin-right: 10px;
+    /* height: 40px; */
+}
+
+.participant_list {
+    /* margin-top: 50px; */
+}
+
+.particular_participant {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    /* background-color: red; */
+    -webkit-box-shadow: 1px -10px 18px 8px rgba(240, 237, 237, 1);
+    -moz-box-shadow: 1px -10px 18px 8px rgba(240, 237, 237, 1);
+    box-shadow: 1px -10px 18px 8px rgba(240, 237, 237, 1);
+    border-radius: 10px;
+    padding: 5px 10px;
+    /* margin-top: 50px; */
+}
+
+.particular_participant_left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    /* margin-top: 50px; */
+
+}
