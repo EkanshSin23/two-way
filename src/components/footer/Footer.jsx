@@ -11,10 +11,12 @@ import ChatBubbleOutlineIcon from '@mui/icons-material/ChatBubbleOutline';
 import PeopleAltIcon from '@mui/icons-material/PeopleAlt';
 import MenuIcon from '@mui/icons-material/Menu';
 import VideocamOffIcon from '@mui/icons-material/VideocamOff';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import StopScreenShareIcon from '@mui/icons-material/StopScreenShare';
+import EmojiPicker from 'emoji-picker-react';
 
 
-const Footer = ({ showChat, setShowChat, setShowParticipants, showParticipants, stopCamera, playCamera, stopAudio, playAudio, startCapture }) => {
+const Footer = ({ showChat, setShowChat, setShowParticipants, showParticipants, stopCamera, playCamera, stopAudio, playAudio, startCapture, stopCapture, isCameraOnFromScreenShare }) => {
 
 
     const handleChatParticipants = () => {
@@ -22,8 +24,11 @@ const Footer = ({ showChat, setShowChat, setShowParticipants, showParticipants, 
         setShowParticipants(true)
     }
 
+
     const [isCameraOn, setIsCameraOn] = useState(true)
     const [isMicOn, setIsMicOn] = useState(true)
+    const [isSSOn, setIsSSOn] = useState(true)
+    const [showEmoji, setShowEmoji] = useState(false)
     const displayMediaOptions = {
         video: {
             displaySurface: "browser",
@@ -39,6 +44,9 @@ const Footer = ({ showChat, setShowChat, setShowParticipants, showParticipants, 
     };
     return (
         <>
+            {showEmoji && < div className='emoji_container' >
+                <EmojiPicker />
+            </div >}
             <div className="footer_container">
                 <div className="footer_left">
                     <div className="footer_mic" style={{
@@ -73,11 +81,21 @@ const Footer = ({ showChat, setShowChat, setShowParticipants, showParticipants, 
                 </div >
                 <div className="footer_middle">
                     <div className="footer_screenshare" style={{ borderColor: 'gray' }}>
-                        <div style={{ borderRight: '1px solid black', padding: '10px 10px' }} onClick={() => startCapture(displayMediaOptions)}><PresentToAllIcon sx={{ color: 'gray' }} /></div>
+                        {isSSOn ? <div style={{ borderRight: '1px solid black', padding: '10px 10px' }} onClick={() => {
+                            startCapture(displayMediaOptions)
+                            setIsSSOn(false)
+                        }
+                        }><PresentToAllIcon sx={{ color: 'gray' }} /></div>
+                            :
+                            <div style={{ borderRight: '1px solid black', padding: '10px 10px' }} onClick={() => {
+                                stopCapture()
+                                setIsSSOn(true)
+                            }}><StopScreenShareIcon sx={{ color: 'gray' }} /></div>
+                        }
                         <div style={{ padding: '10px 10px' }}><MoreVertIcon sx={{ color: 'gray' }} /></div>
 
                     </div>
-                    <div className="footer_emoji" style={{ borderColor: 'gray' }}>
+                    <div className="footer_emoji" style={{ borderColor: 'gray' }} onClick={() => setShowEmoji(!showEmoji)}>
 
                         <div style={{ padding: '10px 10px' }}><EmojiEmotionsIcon sx={{ color: 'gray' }} /></div>
 

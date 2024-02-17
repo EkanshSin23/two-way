@@ -6,7 +6,7 @@ import { useParams } from 'react-router-dom';
 import Footer from '../components/footer/Footer';
 import './Mediasoup.css'
 import LiveTabs from '../components/tabs/LiveTabs';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import ChatContainer from '../components/chat/ChatContainer';
 
 
@@ -14,9 +14,9 @@ import ChatContainer from '../components/chat/ChatContainer';
 // const roomName = 'test';
 
 // const socket = io("/mediasoup")
-// const socket = io.connect('https://s34b5jj9-3003.inc1.devtunnels.ms/mediasoup', { transports: ['websocket'] });
+const socket = io.connect('https://s34b5jj9-3003.inc1.devtunnels.ms/mediasoup', { transports: ['websocket'] });
 // const socket = io.connect('https://two-way.sdcampus.com/mediasoup', { transports: ['websocket'] });
-const socket = io.connect('http://localhost:3003/mediasoup', { transports: ['websocket'] });
+// const socket = io.connect('http://localhost:3003/mediasoup', { transports: ['websocket'] });
 
 console.log('socket', socket)
 
@@ -86,7 +86,7 @@ function MediaSoup() {
 
     const joinRoom = () => {
 
-        socket.emit('joinRoom', { roomName }, (data) => {
+        socket.emit('joinRoom', roomName, (data) => {
             console.log(`Router RTP Capabilities... ${data.rtpCapabilities}`)
             // we assign to local variable and will be used when
             // loading the client Device (see createDevice above)
@@ -227,20 +227,20 @@ function MediaSoup() {
         // https://mediasoup.org/documentation/v3/mediasoup-client/api/#transport-produce
         // this action will trigger the 'connect' and 'produce' events above
 
-        audioProducer = await producerTransport.produce(audioParams);
+        // audioProducer = await producerTransport.produce(audioParams);
         videoProducer = await producerTransport.produce(videoParams);
 
-        audioProducer.on('trackended', () => {
-            console.log('audio track ended')
+        // audioProducer.on('trackended', () => {
+        //     console.log('audio track ended')
 
-            // close audio track
-        })
+        //     // close audio track
+        // })
 
-        audioProducer.on('transportclose', () => {
-            console.log('audio transport ended')
+        // audioProducer.on('transportclose', () => {
+        //     console.log('audio transport ended')
 
-            // close audio track
-        })
+        //     // close audio track
+        // })
 
         videoProducer.on('trackended', () => {
             console.log('video track ended')
@@ -304,7 +304,10 @@ function MediaSoup() {
 
 
     // server informs the client of a new producer just joined
-    socket.on('new-producer', ({ producerId }) => signalNewConsumerTransport(producerId))
+    socket.on('new-producer', ({ producerId }) => {
+
+        signalNewConsumerTransport(producerId)
+    })
 
     const getProducers = () => {
         socket.emit('getProducers', producerIds => {
@@ -319,9 +322,15 @@ function MediaSoup() {
         // for consumer, we need to tell the server first
         // to create a consumer based on the rtpCapabilities and consume
         // if the router can consume, it will send back a set of params as below
+        console.log('Remote Producer Id', remoteProducerId)
+        // const data = { producerId: remoteProducerId }
+        // console.log('line327', data)
         await socket.emit('consume', {
             rtpCapabilities: device.rtpCapabilities,
             remoteProducerId,
+            // remoteProducerId: {
+            //     ...data
+            // },
             serverConsumerTransportId,
         }, async ({ params }) => {
             if (params.error) {
@@ -329,7 +338,7 @@ function MediaSoup() {
                 return
             }
 
-            console.log(`Consumer Params ${params}`)
+            console.log('consumer params', params)
             // then consume with the local consumer transport
             // which creates a consumer
             const consumer = await consumerTransport.consume({
@@ -339,7 +348,7 @@ function MediaSoup() {
                 rtpParameters: params.rtpParameters
             })
 
-            console.log('consumer transport. consume', consumerTransport.consume)
+
             consumerTransports = [
                 ...consumerTransports,
                 {
@@ -349,8 +358,7 @@ function MediaSoup() {
                     consumer,
                 },
             ]
-            console.log('Consumer Transportss', consumerTransports)
-            console.log('Consumer Transports type', typeof (consumerTransports[0]?.consumer))
+
 
 
             // create a new div element for the new consumer media
@@ -399,8 +407,22 @@ function MediaSoup() {
     //UI 
     const [showChat, setShowChat] = useState(false)
     const [showParticipants, setShowParticipants] = useState(false)
+    const [msgList, setMsgList] = useState([])
+    console.log(msgList)
+    useEffect(() => {
+        socket.emit('chat-room', ('room'))
+        socket.on('recieve-message', (data) => {
+            // console.log('Messages', data)
+            setMsgList((prev) => [...prev, data])
+            // setMsgList(data)
+        })
+        socket.on('test', () => { console.log('Tessssting') })
+    }, [])
 
-
+    let mySocketId = socket.id
+    const sendMessage = (info) => {
+        socket.emit('send-message', { ...info, id: socket.id })
+    }
 
     function stopAudio() {
         const audioTrack = streamOfUser.getTracks().find(track => track.kind === 'audio');
@@ -422,8 +444,10 @@ function MediaSoup() {
     }
 
 
-
     async function startCapture(displayMediaOptions) {
+        hideCam()
+        // const videoTrack = document.getElementById('localVideo').getTracks().find(track => track.kind === 'video');
+        // videoTrack.enabled = false;
         let captureStream = null;
 
         try {
@@ -433,21 +457,26 @@ function MediaSoup() {
             console.error(`Error: ${err}`);
         }
         document.getElementById('localVideo').srcObject = captureStream;
+        videoParams = { track: captureStream, ...videoParams };
+
+
     }
 
     function stopCapture(evt) {
-        let tracks = streamOfUser.srcObject.getTracks();
+        // console.log('helllo stopping')
+        let tracks = document.getElementById('localVideo').srcObject.getTracks();
 
         tracks.forEach((track) => track.stop());
+        document.getElementById('localVideo').srcObject = streamOfUser;
         // streamOfUser.srcObject = null;
-        getLocalStream()
+        // getLocalStream()
     }
     return (<div className="two_way_container" style={{
         display: showChat ? 'flex' : ''
     }}>
         <div className='video_ui_container'>
 
-            <video id="localVideo" autoPlay className="video" muted minWidth='600px' controls style={{ width: " 90% !important" }}></video>
+            <video id="localVideo" autoPlay className="video" muted minWidth='600px' style={{ width: " 90% !important" }}></video>
             <LiveTabs />
             {/* <h5>Other participants</h5> */}
             <div id="videoContainer"></div>
@@ -465,10 +494,16 @@ function MediaSoup() {
             playAudio={playAudio}
             startCapture={startCapture}
             stopCapture={stopCapture}
+
         // streamOfUser={streamOfUser}
         />
         {showChat && <div className='chat_container' >
-            <ChatContainer showParticipantsDirectly={showParticipants} />
+            <ChatContainer
+                showParticipantsDirectly={showParticipants}
+                sendMessage={sendMessage}
+                msgList={msgList}
+                mySocketId={mySocketId}
+            />
         </div>}
     </div>
     );

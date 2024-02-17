@@ -3,17 +3,32 @@ import './ChatContainer.css'
 import EmojiEmotionsIcon from '@mui/icons-material/EmojiEmotions';
 import SendIcon from '@mui/icons-material/Send';
 import SearchIcon from '@mui/icons-material/Search';
-import { Avatar, Typography } from "@mui/material";
+import { Avatar, Stack, Typography } from "@mui/material";
 import MicIcon from '@mui/icons-material/Mic';
 // import MoreVertIcon from '@mui/icons-material/MoreVert';
 import VideocamIcon from '@mui/icons-material/Videocam';
 
 
-const ChatContainer = ({ showParticipantsDirectly }) => {
+const ChatContainer = ({ showParticipantsDirectly, sendMessage, msgList, mySocketId }) => {
 
 
     const [showParticipants, setShowParticipants] = useState(showParticipantsDirectly)
+    const [msg, setMsg] = useState('')
+    const handleSendMessage = (e) => {
 
+        const { value } = e.target;
+        setMsg(value)
+
+    }
+    const handleSend = () => {
+        if (msg !== '') {
+            sendMessage({ name: `Rohan-${msg} `, msg: msg })
+            setMsg('')
+        }
+        else {
+            alert('Type Something...')
+        }
+    }
 
 
     return (
@@ -121,18 +136,29 @@ const ChatContainer = ({ showParticipantsDirectly }) => {
                 </div>
             </div> :
                 <div className="chat_container_chats" >
-
-
-                    <div className="input_box" style={{
+                    <Stack sx={{ overflowY: 'scroll', minHeight: '60vh', maxHeight: '60vh' }}>
+                        {msgList?.length > 0 ? msgList?.map((item, index) => {
+                            return <Stack>
+                                {item?.id == mySocketId ? <Typography key={index} ><span style={{ color: 'green' }}>{item?.id}</span>
+                                    :{item?.msg}</Typography> : <Typography>{item?.id}:{item?.msg}</Typography>}
+                            </Stack>
+                            // <Typography></Typography>
+                        }) : 'Enter Something...'}
+                    </Stack>
+                    < div className="input_box" style={{
                         borderRadius: '10px',
                         position: 'absolute'
                         ,
                         top: '63vh'
                     }}>
-                        <input type="text" placeholder="Send a message..." />
+                        <input type="text" value={msg} placeholder="Send a message..." onChange={handleSendMessage} onKeyDown={(e) => {
+                            if (e.key == 'Enter') {
+                                handleSend()
+                            }
+                        }} />
                         <div className="input_box_icons">
                             <div>  <EmojiEmotionsIcon /></div>
-                            <div>     <SendIcon /></div>
+                            <div onClick={handleSend}>     <SendIcon /></div>
                         </div>
                     </div>
                 </div>
