@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import './ChatContainer.css'
 import EmojiEmotionsIcon from '@mui/icons-material/EmojiEmotions';
 import SendIcon from '@mui/icons-material/Send';
@@ -7,10 +7,12 @@ import { Avatar, Stack, Typography } from "@mui/material";
 import MicIcon from '@mui/icons-material/Mic';
 // import MoreVertIcon from '@mui/icons-material/MoreVert';
 import VideocamIcon from '@mui/icons-material/Videocam';
+import VideocamOffIcon from '@mui/icons-material/VideocamOff';
 
 
-const ChatContainer = ({ showParticipantsDirectly, sendMessage, msgList, mySocketId }) => {
+const ChatContainer = ({ showParticipantsDirectly, sendMessage, msgList, mySocketId, participantsList, socket }) => {
 
+    console.log('participnat List in conatiner', participantsList)
 
     const [showParticipants, setShowParticipants] = useState(showParticipantsDirectly)
     const [msg, setMsg] = useState('')
@@ -29,6 +31,14 @@ const ChatContainer = ({ showParticipantsDirectly, sendMessage, msgList, mySocke
             alert('Type Something...')
         }
     }
+
+    const [isCameraOn, setIsCameraOn] = useState(false)
+    const [clickedId, setClickedId] = useState('')
+    const handleCamera = (id) => {
+        socket.emit('handle-user-camera', ({ userId: id.id, status: !isCameraOn }))
+
+    }
+
 
 
     return (
@@ -72,6 +82,30 @@ const ChatContainer = ({ showParticipantsDirectly, sendMessage, msgList, mySocke
 
                 </div>
                 <div className="participant_list" style={{ marginTop: '50px', width: '295px', }}>
+                    {participantsList?.map((item, index) => {
+                        return <div key={index} className="particular_participant" style={{ borderRadius: '10px' }} onClick={() => setClickedId(item.id)}>
+                            <div className="particular_participant_left">
+                                <Avatar sx={{ borderRadius: '10px', height: 30 }} />
+                                <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                    <Typography sx={{ fontWeight: '400', fontSize: '15px', textAlign: 'start' }}>{item?.name}</Typography>
+                                    <Typography sx={{ fontSize: '10px' }}>Developer</Typography>
+
+                                </div>
+                            </div>
+                            <div className="particular_participant_right">
+                                {isCameraOn && item.id == clickedId ? <VideocamIcon onClick={() => {
+
+                                    setIsCameraOn(!isCameraOn)
+                                    handleCamera(item)
+                                }} /> : <VideocamOffIcon onClick={() => {
+                                    setIsCameraOn(!isCameraOn)
+                                    handleCamera(item)
+                                }} />}
+                            </div>
+
+                        </div>
+                    })}
+                    {/* 
                     <div className="particular_participant" style={{ borderRadius: '10px' }}>
                         <div className="particular_participant_left">
                             <Avatar sx={{ borderRadius: '10px', height: 30 }} />
@@ -83,7 +117,13 @@ const ChatContainer = ({ showParticipantsDirectly, sendMessage, msgList, mySocke
                         </div>
                         <div className="particular_participant_right">
                             <MicIcon />
-                            <VideocamIcon />
+                            {isCameraOn ? <VideocamIcon onClick={() => {
+                                setIsCameraOn(!isCameraOn)
+                                handleCamera('1234')
+                            }} /> : <VideocamOffIcon onClick={() => {
+                                setIsCameraOn(!isCameraOn)
+                                handleCamera('1234')
+                            }} />}
                         </div>
 
                     </div>
@@ -116,22 +156,7 @@ const ChatContainer = ({ showParticipantsDirectly, sendMessage, msgList, mySocke
                             <VideocamIcon />
                         </div>
 
-                    </div>
-                    <div className="particular_participant" style={{ borderRadius: '10px' }}>
-                        <div className="particular_participant_left">
-                            <Avatar sx={{ borderRadius: '10px', height: 30 }} />
-                            <div style={{ display: 'flex', flexDirection: 'column' }}>
-                                <Typography sx={{ fontWeight: '400', fontSize: '15px', textAlign: 'start' }}>Rohan</Typography>
-                                <Typography sx={{ fontSize: '10px' }}>Developer</Typography>
-
-                            </div>
-                        </div>
-                        <div className="particular_participant_right">
-                            <MicIcon />
-                            <VideocamIcon />
-                        </div>
-
-                    </div>
+                    </div> */}
 
                 </div>
             </div> :

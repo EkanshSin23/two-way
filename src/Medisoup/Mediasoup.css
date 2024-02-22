@@ -8,46 +8,64 @@
     flex: 1;
 }
 
-.video_ui_container {
+/* .video_ui_container {
     flex: 3;
-}
+} */
 
 .video {
 
-    width: 400px !important;
+    /* width: 400px !important; */
     height: 60vh;
+    width: 100% !important;
 }
 
 #localVideo {
-    width: 90% !important;
+    /* width: 90% !important; */
     border-radius: 10px;
-    min-width: 90%;
+    /* min-width: 90%; */
     /* min-height: 100%; */
     object-fit: fill;
+    /* flex: 1; */
 }
 
 #videoContainer {
     display: flex;
     align-items: center;
     justify-content: center;
-    position: absolute;
-    top: 10px;
-    left: 20px;
-    bottom: -200px;
-    gap: '10px' !important;
+    flex-direction: row;
+    flex-wrap: wrap;
+    height: 70vh !important;
+    /* position: absolute; */
+    /* top: 10px; */
+    /* left: 20px; */
+    /* bottom: -200px; */
+    padding: 0 10px;
+    gap: 10px !important;
     margin-right: 20px;
+    border-radius: 20px;
+    overflow: scroll;
+}
+
+.remoteVideo video {
+    /* background-color: blueviolet; */
+    /* height: 200px; */
+    /* width: 200px; */
+    /* padding-top: 20px; */
+    /* padding-bottom: 20px; */
+    width: 100% !important;
+    /* flex: 1; */
+    margin-right: 10px;
     border-radius: 20px;
     overflow: hidden;
 }
 
-.remoteVideo video {
-    background-color: blueviolet;
-    height: 100px;
-    width: 100px;
-    padding-top: 20px;
-    padding-bottom: 20px;
-    margin-right: 10px;
-}
+/* .users_feed {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+
+} */
 
 /* #videoContainer div {
     background-color: brown;

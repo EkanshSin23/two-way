@@ -16,7 +16,7 @@ import StopScreenShareIcon from '@mui/icons-material/StopScreenShare';
 import EmojiPicker from 'emoji-picker-react';
 
 
-const Footer = ({ showChat, setShowChat, setShowParticipants, showParticipants, stopCamera, playCamera, stopAudio, playAudio, startCapture, stopCapture, isCameraOnFromScreenShare }) => {
+const Footer = ({ showChat, setShowChat, setShowParticipants, showParticipants, stopCamera, isScreenShared, playCamera, stopAudio, playAudio, startCapture, stopCapture, isCameraOnFromScreenShare }) => {
 
 
     const handleChatParticipants = () => {
@@ -81,7 +81,7 @@ const Footer = ({ showChat, setShowChat, setShowParticipants, showParticipants, 
                 </div >
                 <div className="footer_middle">
                     <div className="footer_screenshare" style={{ borderColor: 'gray' }}>
-                        {isSSOn ? <div style={{ borderRight: '1px solid black', padding: '10px 10px' }} onClick={() => {
+                        {!isScreenShared ? <div style={{ borderRight: '1px solid black', padding: '10px 10px' }} onClick={() => {
                             startCapture(displayMediaOptions)
                             setIsSSOn(false)
                         }

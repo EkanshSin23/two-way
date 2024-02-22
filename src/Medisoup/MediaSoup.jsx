@@ -8,15 +8,16 @@ import './Mediasoup.css'
 import LiveTabs from '../components/tabs/LiveTabs';
 import { useEffect, useState } from 'react';
 import ChatContainer from '../components/chat/ChatContainer';
+import poster from './poster.jpg'
 
 
 
 // const roomName = 'test';
 
 // const socket = io("/mediasoup")
-const socket = io.connect('https://s34b5jj9-3003.inc1.devtunnels.ms/mediasoup', { transports: ['websocket'] });
+// const socket = io.connect('https://s34b5jj9-3003.inc1.devtunnels.ms/mediasoup', { transports: ['websocket'] });
 // const socket = io.connect('https://two-way.sdcampus.com/mediasoup', { transports: ['websocket'] });
-// const socket = io.connect('http://localhost:3003/mediasoup', { transports: ['websocket'] });
+const socket = io.connect('http://localhost:3003/mediasoup', { transports: ['websocket'] });
 
 console.log('socket', socket)
 
@@ -30,42 +31,101 @@ function MediaSoup() {
     let consumerTransports = []
     let audioProducer
     let videoProducer
+    let screenShare
+
     let consumer
     let isProducer = false
     // console.log(videoContainer)
     let localVideo
     let streamOfUser;
+    // let params = {
+    //     // mediasoup params
+    //     encodings: [
+    //         {
+    //             rid: 'r0',
+    //             maxBitrate: 100000,
+    //             scalabilityMode: 'S1T3',
+    //         },
+    //         {
+    //             rid: 'r1',
+    //             maxBitrate: 300000,
+    //             scalabilityMode: 'S1T3',
+    //         },
+    //         {
+    //             rid: 'r2',
+    //             maxBitrate: 900000,
+    //             scalabilityMode: 'S1T3',
+    //         },
+    //     ],
+    //     // https://mediasoup.org/documentation/v3/mediasoup-client/api/#ProducerCodecOptions
+    //     codecOptions: {
+    //         videoGoogleStartBitrate: 1000
+    //     }
+    // }
     let params = {
-        // mediasoup params
-        encodings: [
+        kind: "video",
+        rtpParameters:
+        {
+            mid: "1",
+            codecs:
+                [
+                    {
+                        mimeType: "video/VP8",
+                        payloadType: 101,
+                        clockRate: 90000,
+                        rtcpFeedback:
+                            [
+                                { type: "nack" },
+                                { type: "nack", parameter: "pli" },
+                                { type: "ccm", parameter: "fir" },
+                                { type: "goog-remb" }
+                            ]
+                    },
+                    {
+                        mimeType: "video/rtx",
+                        payloadType: 102,
+                        clockRate: 90000,
+                        parameters: { apt: 101 }
+                    }
+                ],
+            headerExtensions:
+                [
+                    {
+                        id: 2,
+                        uri: "urn:ietf:params:rtp-hdrext:sdes:mid"
+                    },
+                    {
+                        id: 3,
+                        uri: "urn:ietf:params:rtp-hdrext:sdes:rtp-stream-id"
+                    },
+                    {
+                        id: 5,
+                        uri: "urn:3gpp:video-orientation"
+                    },
+                    {
+                        id: 6,
+                        uri: "http://www.webrtc.org/experiments/rtp-hdrext/abs-send-time"
+                    }
+                ],
+            encodings:
+                [
+                    { rid: "r0", active: true, maxBitrate: 100000 },
+                    { rid: "r1", active: true, maxBitrate: 300000 },
+                    { rid: "r2", active: true, maxBitrate: 900000 }
+                ],
+            rtcp:
             {
-                rid: 'r0',
-                maxBitrate: 100000,
-                scalabilityMode: 'S1T3',
-            },
-            {
-                rid: 'r1',
-                maxBitrate: 300000,
-                scalabilityMode: 'S1T3',
-            },
-            {
-                rid: 'r2',
-                maxBitrate: 900000,
-                scalabilityMode: 'S1T3',
-            },
-        ],
-        // https://mediasoup.org/documentation/v3/mediasoup-client/api/#ProducerCodecOptions
-        codecOptions: {
-            videoGoogleStartBitrate: 1000
+                cname: "Zjhd656aqfoo"
+            }
         }
     }
-
     let audioParams;
     let videoParams = { params };
+    let screenShareParams = { params };
     let consumingTransports = [];
     console.log('times')
     socket.on('connection-success', ({ socketId }) => {
-        console.log('times in socket')
+
         getLocalStream()
     })
 
@@ -86,7 +146,7 @@ function MediaSoup() {
 
     const joinRoom = () => {
 
-        socket.emit('joinRoom', roomName, (data) => {
+        socket.emit('joinRoom', { ...roomName, name: 'Rohan', isAdmin: true }, (data) => {
             console.log(`Router RTP Capabilities... ${data.rtpCapabilities}`)
             // we assign to local variable and will be used when
             // loading the client Device (see createDevice above)
@@ -111,7 +171,7 @@ function MediaSoup() {
                 routerRtpCapabilities: rtpCapabilities
             })
 
-            console.log('Device RTP Capabilities', device.rtpCapabilities)
+
             // once the device loads, create transport
             createSendTransport()
 
@@ -209,7 +269,13 @@ function MediaSoup() {
                         callback({ id })
 
                         // if producers exist, then join room
-                        if (producersExist) getProducers()
+                        console.log('pproducer,exist', producersExist)
+                        if (producersExist) {
+                            setOnlyProducer(false)
+                            getProducers()
+                        } else {
+                            setOnlyProducer(true)
+                        }
                     })
                 } catch (error) {
                     errback(error)
@@ -220,6 +286,8 @@ function MediaSoup() {
         })
     }
 
+    const [videoProducerId, setVideoProducerId] = useState('')
+    const [audioProducerId, setAudioProducerId] = useState('')
 
     const connectSendTransport = async () => {
         // we now call produce() to instruct the producer transport
@@ -227,21 +295,29 @@ function MediaSoup() {
         // https://mediasoup.org/documentation/v3/mediasoup-client/api/#transport-produce
         // this action will trigger the 'connect' and 'produce' events above
 
-        // audioProducer = await producerTransport.produce(audioParams);
+        audioProducer = await producerTransport.produce(audioParams);
+        // console.log('Video Params', videoParams)
         videoProducer = await producerTransport.produce(videoParams);
+        setVideoProducerId(videoProducer.id)
+        setAudioProducerId(audioProducer.id)
+        // console.log('Produced VideoPro', videoProducer)
+        audioProducer.on('trackended', () => {
+            console.log('audio track ended')
 
-        // audioProducer.on('trackended', () => {
-        //     console.log('audio track ended')
+            // close audio track
+        })
 
-        //     // close audio track
-        // })
+        audioProducer.on('transportclose', () => {
+            console.log('audio transport ended')
 
-        // audioProducer.on('transportclose', () => {
-        //     console.log('audio transport ended')
+            // close audio track
+        })
 
-        //     // close audio track
-        // })
 
+        videoProducer.observer.on("pause", () => {
+            console.log('front end paused')
+
+        })
         videoProducer.on('trackended', () => {
             console.log('video track ended')
 
@@ -253,7 +329,11 @@ function MediaSoup() {
 
             // close video track
         })
+        videoProducer.on('paused', () => {
+            console.log('PAUSEDDD')
+        })
     }
+
 
 
     const signalNewConsumerTransport = async (remoteProducerId) => {
@@ -264,6 +344,7 @@ function MediaSoup() {
         await socket.emit('createWebRtcTransport', { consumer: true }, ({ params }) => {
             // The server sends back params needed 
             // to create Send Transport on the client side
+            // console.log('DEVICE', device.sctpCapabilities)
             if (params.error) {
                 console.log(params.error)
                 return
@@ -271,46 +352,53 @@ function MediaSoup() {
             console.log(`PARAMS... ${params}`)
 
             let consumerTransport
-            try {
-                consumerTransport = device.createRecvTransport(params)
-            } catch (error) {
-                // exceptions: 
-                // {InvalidStateError} if not loaded
-                // {TypeError} if wrong arguments.
-                console.log(error)
-                return
-            }
-
-            consumerTransport.on('connect', async ({ dtlsParameters }, callback, errback) => {
+            if (device) {
                 try {
-                    // Signal local DTLS parameters to the server side transport
-                    // see server's socket.on('transport-recv-connect', ...)
-                    await socket.emit('transport-recv-connect', {
-                        dtlsParameters,
-                        serverConsumerTransportId: params.id,
-                    })
-
-                    // Tell the transport that parameters were transmitted.
-                    callback()
+                    consumerTransport = device.createRecvTransport(params)
                 } catch (error) {
-                    // Tell the transport that something was wrong
-                    errback(error)
+                    // exceptions: 
+                    // {InvalidStateError} if not loaded
+                    // {TypeError} if wrong arguments.
+                    console.log(error)
+                    return
                 }
-            })
 
-            connectRecvTransport(consumerTransport, remoteProducerId, params.id)
-        })
+                consumerTransport.on('connect', async ({ dtlsParameters }, callback, errback) => {
+                    try {
+                        // Signal local DTLS parameters to the server side transport
+                        // see server's socket.on('transport-recv-connect', ...)
+                        await socket.emit('transport-recv-connect', {
+                            dtlsParameters,
+                            serverConsumerTransportId: params.id,
+                        })
+                        setOnlyProducer(false)
+                        // Tell the transport that parameters were transmitted.
+                        callback()
+                    } catch (error) {
+                        setOnlyProducer(true)
+                        // Tell the transport that something was wrong
+                        errback(error)
+                    }
+                })
+
+                connectRecvTransport(consumerTransport, remoteProducerId, params.id)
+            } else {
+                console.log('device not ready')
+            }
+        }
+
+        )
     }
 
 
     // server informs the client of a new producer just joined
     socket.on('new-producer', ({ producerId }) => {
-
+        // console.log('Not COMING')
         signalNewConsumerTransport(producerId)
     })
 
     const getProducers = () => {
-        socket.emit('getProducers', producerIds => {
+        socket.emit('getProducers', { data: '' }, producerIds => {
             console.log('producerIds', producerIds)
             // for each of the producer create a consumer
             // producerIds.forEach(id => signalNewConsumerTransport(id))
@@ -347,7 +435,13 @@ function MediaSoup() {
                 kind: params.kind,
                 rtpParameters: params.rtpParameters
             })
+            consumer.on('producerpause', () => {
+                console.log('front end paused')
+            })
+            consumer.observer.on("pause", () => {
+                console.log('front end paused')
 
+            })
 
             consumerTransports = [
                 ...consumerTransports,
@@ -360,10 +454,13 @@ function MediaSoup() {
             ]
 
 
-
+            console.log('remodte producer id', remoteProducerId)
             // create a new div element for the new consumer media
             videoContainer = document.getElementById('videoContainer')
             const newElem = document.createElement('div')
+            newElem.style.position = 'relative'
+            const host = document.createElement('h5')
+
             newElem.setAttribute('id', `td-${remoteProducerId}`)
 
             if (params.kind == 'audio') {
@@ -372,12 +469,30 @@ function MediaSoup() {
             } else {
                 //append to the video container
                 newElem.setAttribute('class', 'remoteVideo')
-                newElem.innerHTML = '<video id="' + remoteProducerId + '" autoplay class="video" ></video>'
+                if (params.isAdmin) {
+                    newElem.innerHTML = '<video id = "' + remoteProducerId + '" autoplay class="video" ></video>'
+                    host.innerText = 'Host'
+                    host.style.position = 'absolute'
+                    host.style.color = '#ffffff8f'
+                    host.style.top = '0px'
+                    host.style.right = '30px'
+                    host.style.background = '#80808073'
+                    host.style.padding = '2px 5px'
+                    host.style.borderRadius = '5px'
+
+                    newElem.appendChild(host)
+                }
+                else {
+                    newElem.innerHTML = '<video id = "' + remoteProducerId + '" autoplay class="video" ></video>'
+                }
             }
 
             videoContainer.appendChild(newElem)
+            // videoContainer.appendChild(host)
+
 
             // destructure and retrieve the video track from the producer
+            console.log('Producer consuner', consumer)
             const { track } = consumer
 
             console.log('producer Track', track)
@@ -392,60 +507,179 @@ function MediaSoup() {
     socket.on('producer-closed', ({ remoteProducerId }) => {
         // server notification is received when a producer is closed
         // we need to close the client-side consumer and associated transport
-        const producerToClose = consumerTransports.find(transportData => transportData.producerId === remoteProducerId)
-        producerToClose.consumerTransport.close()
-        producerToClose.consumer.close()
+        console.log('consumer Transports', consumerTransports)
+        console.log('consumer Transports remoteProducerId', remoteProducerId)
+        if (consumerTransports.length !== 0) {
+            const producerToClose = consumerTransports.find(transportData => transportData.producerId === remoteProducerId)
+            producerToClose.consumerTransport.close()
+            producerToClose.consumer.close()
+            setOnlyProducer(false)
 
-        // remove the consumer transport from the list
-        consumerTransports = consumerTransports.filter(transportData => transportData.producerId !== remoteProducerId)
+            // remove the consumer transport from the list
+            consumerTransports = consumerTransports.filter(transportData => transportData.producerId !== remoteProducerId)
 
-        // remove the video div element
-        videoContainer.removeChild(document.getElementById(`td-${remoteProducerId}`))
+            // remove the video div element
+            videoContainer.removeChild(document.getElementById(`td-${remoteProducerId}`))
+        } else {
+            setOnlyProducer(true)
+            console.log('no consmers to close')
+        }
     })
+
+
 
 
     //UI 
     const [showChat, setShowChat] = useState(false)
     const [showParticipants, setShowParticipants] = useState(false)
     const [msgList, setMsgList] = useState([])
-    console.log(msgList)
+    const [participantsListOfUser, setParticipantsListOfUser] = useState([])
+    const [onlyProducer, setOnlyProducer] = useState(true)
+
+
+
     useEffect(() => {
         socket.emit('chat-room', ('room'))
         socket.on('recieve-message', (data) => {
-            // console.log('Messages', data)
             setMsgList((prev) => [...prev, data])
-            // setMsgList(data)
         })
-        socket.on('test', () => { console.log('Tessssting') })
+        socket.on('users-status', (data) => {
+            console.log('User Status', data)
+            changeUserStatus(data)
+        })
+        // socket.on('test', () => { console.log('Tessssting') })
     }, [])
+    socket.on('participants', (data) => {
 
+        console.log('line484', data)
+
+
+        setParticipantsListOfUser(data)
+
+
+
+    })
+
+
+    const changeUserStatus = (data) => {
+        const videoContainer = document.getElementById('videoContainer')
+        console.log('data in user status', data)
+
+
+        if (!data.videoStatus && (data.videoProducerId !== videoProducerId)) {
+            const helper = document.getElementById(`td-${data.videoProducerId}`)
+            console.log('helper', helper)
+            if (helper) {
+                helper.style.display = 'none'
+
+                const newElem = document.createElement('div')
+                // newElem.innerHTML = '<audio id="' + remoteProducerId + '" autoplay></audio>'
+                newElem.setAttribute('id', `td-${data.videoProducerId}-td`)
+                newElem.style.width = '500px'
+                newElem.style.height = '60vh'
+                newElem.style.display = 'flex'
+                newElem.style.background = 'black'
+                newElem.style.justifyContent = 'center'
+                newElem.style.alignItems = 'center'
+                newElem.style.color = 'white'
+
+                newElem.style.borderRadius = '10px'
+                newElem.innerText = 'User'
+
+                videoContainer.appendChild(newElem)
+            } else { }
+        }
+        if (data.videoStatus && (data.videoProducerId !== videoProducerId)) {
+            const helper = document.getElementById(`td-${data.videoProducerId}-td`)
+            console.log('helper', helper)
+            if (helper) {
+                helper.style.display = 'none'
+                document.getElementById(`td-${data.videoProducerId}`).style.display = ''
+
+            } else { }
+        }
+    }
     let mySocketId = socket.id
     const sendMessage = (info) => {
         socket.emit('send-message', { ...info, id: socket.id })
     }
 
     function stopAudio() {
-        const audioTrack = streamOfUser.getTracks().find(track => track.kind === 'audio');
+        socket.emit('producer-paused', ({ audioProducerId: audioProducerId, audioStatus: false }))
+        const audioTrack = document.getElementById('localVideo').srcObject.getTracks().find(track => track.kind === 'audio');
         audioTrack.enabled = false;
     }
     function playAudio() {
-        const audioTrack = streamOfUser.getTracks().find(track => track.kind === 'audio');
+        socket.emit('producer-paused', ({ audioProducerId: audioProducerId, audioStatus: true }))
+        const audioTrack = document.getElementById('localVideo').srcObject.getTracks().find(track => track.kind === 'audio');
         audioTrack.enabled = true;
     }
 
     function hideCam() {
-        const videoTrack = streamOfUser.getTracks().find(track => track.kind === 'video');
+        console.log('videoProducer id', videoProducerId)
+        const videoTrack = document.getElementById('localVideo').srcObject.getTracks().find(track => track.kind === 'video');
         videoTrack.enabled = false;
+
+        socket.emit('producer-paused', ({ videoProducerId: videoProducerId, videoStatus: false }))
+        document.getElementById('localVideo').style.display = 'none'
+        const localVideoContainer = document.getElementById('localVideoContainer')
+        const newElem = document.createElement('div')
+        // newElem.innerHTML = '<audio id="' + remoteProducerId + '" autoplay></audio>'
+        newElem.setAttribute('id', 'localVideoThumbnail')
+        newElem.style.width = '500px'
+        newElem.style.height = '60vh'
+        newElem.style.display = 'flex'
+        newElem.style.background = 'black'
+        newElem.style.justifyContent = 'center'
+        newElem.style.alignItems = 'center'
+        newElem.style.color = 'white'
+        newElem.style.borderRadius = '10px'
+        newElem.innerText = 'User'
+
+        localVideoContainer.appendChild(newElem)
+        // socket.emit('producer-pause')
+        // producerTransport.paus
+        // socket.emit('transport-pause')
     }
 
     function showCam() {
-        const videoTrack = streamOfUser.getTracks().find(track => track.kind === 'video');
+        const videoTrack = document.getElementById('localVideo').srcObject.getTracks().find(track => track.kind === 'video');
         videoTrack.enabled = true;
+
+        socket.emit('producer-paused', ({ videoProducerId: videoProducerId, videoStatus: true }))
+        const localVideoContainer = document.getElementById('localVideoContainer')
+        localVideoContainer
+            .removeChild(document.getElementById('localVideoThumbnail'))
+
+        document.getElementById('localVideo').style.display = ''
+        // videoProducer.resume()
+        console.log('VIDEO PRODUCER RESUME', videoProducer)
+        socket.emit('producer-resume')
+    }
+    const [isScreenShared, setIsScreenShared] = useState(false)
+
+    const connectSendScreenTransport = async () => {
+
+        console.log('Screen share producer', producerTransport)
+        screenShare = await producerTransport.produce(screenShareParams);
+
+
+        screenShare.on('trackended', () => {
+            console.log('screenShare track ended')
+
+            // close screenShare track
+        })
+
+        screenShare.on('transportclose', () => {
+            console.log('screenShare transport ended')
+
+            // close video track
+        })
     }
 
 
     async function startCapture(displayMediaOptions) {
-        hideCam()
+        // hideCam()
         // const videoTrack = document.getElementById('localVideo').getTracks().find(track => track.kind === 'video');
         // videoTrack.enabled = false;
         let captureStream = null;
@@ -456,31 +690,54 @@ function MediaSoup() {
         } catch (err) {
             console.error(`Error: ${err}`);
         }
-        document.getElementById('localVideo').srcObject = captureStream;
-        videoParams = { track: captureStream, ...videoParams };
 
+        if (captureStream) {
+            setIsScreenShared(true)
+            document.getElementById('screenSharing').srcObject = captureStream;
+            screenShareParams = { track: captureStream.getVideoTracks()[0], ...screenShareParams };
+            connectSendScreenTransport()
+        }
+        else {
+            setIsScreenShared(false)
+            console.log("Not Shared")
+        }
 
     }
 
     function stopCapture(evt) {
         // console.log('helllo stopping')
-        let tracks = document.getElementById('localVideo').srcObject.getTracks();
+        if (isScreenShared) {
+            let tracks = document.getElementById('screenSharing').srcObject.getTracks();
 
-        tracks.forEach((track) => track.stop());
-        document.getElementById('localVideo').srcObject = streamOfUser;
+            tracks.forEach((track) => track.stop());
+            setIsScreenShared(false)
+        }
+        // document.getElementById('screenSharing').srcObject = streamOfUser;
         // streamOfUser.srcObject = null;
         // getLocalStream()
     }
+    useEffect(() => {
+        socket.on('permission', (data) => {
+            console.log('Data', data)
+        })
+    })
     return (<div className="two_way_container" style={{
         display: showChat ? 'flex' : ''
     }}>
         <div className='video_ui_container'>
+            {/* <div className="users_feed"> */}
 
-            <video id="localVideo" autoPlay className="video" muted minWidth='600px' style={{ width: " 90% !important" }}></video>
+            <div id="videoContainer">
+                <video id='screenSharing' autoPlay muted style={{ width: '950px', display: isScreenShared ? "" : 'none', marginLeft: '0px', height: '500px', background: 'red' }} ></video>
+
+                <div id="localVideoContainer" style={{ width: onlyProducer ? '100%' : '' }}>   <video id="localVideo" autoPlay className="video" muted style={{ minWidth: isScreenShared ? '200px' : "90%", maxWidth: isScreenShared ? '200px' : "90%", height: isScreenShared && '200px', position: isScreenShared ? 'absolute' : '', right: '50px', bottom: '25%' }}></video>
+                </div>
+
+            </div>
+
+            {/* </div> */}
             <LiveTabs />
             {/* <h5>Other participants</h5> */}
-            <div id="videoContainer"></div>
-
             {/* <button onClick={createDevice}>Create Device</button> */}
         </div>
         <Footer
@@ -494,18 +751,23 @@ function MediaSoup() {
             playAudio={playAudio}
             startCapture={startCapture}
             stopCapture={stopCapture}
+            isScreenShared={isScreenShared}
 
         // streamOfUser={streamOfUser}
         />
-        {showChat && <div className='chat_container' >
-            <ChatContainer
-                showParticipantsDirectly={showParticipants}
-                sendMessage={sendMessage}
-                msgList={msgList}
-                mySocketId={mySocketId}
-            />
-        </div>}
-    </div>
+        {
+            showChat && <div className='chat_container' >
+                <ChatContainer
+                    showParticipantsDirectly={showParticipants}
+                    sendMessage={sendMessage}
+                    msgList={msgList}
+                    mySocketId={mySocketId}
+                    participantsList={participantsListOfUser}
+                    socket={socket}
+                />
+            </div>
+        }
+    </div >
     );
 }
 
