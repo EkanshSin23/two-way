@@ -9,6 +9,7 @@ import LiveTabs from '../components/tabs/LiveTabs';
 import { useEffect, useState } from 'react';
 import ChatContainer from '../components/chat/ChatContainer';
 import poster from './poster.jpg'
+import toast, { Toaster } from 'react-hot-toast';
 
 
 
@@ -146,7 +147,7 @@ function MediaSoup() {
 
     const joinRoom = () => {
 
-        socket.emit('joinRoom', { ...roomName, name: 'Rohan', isAdmin: true }, (data) => {
+        socket.emit('joinRoom', { ...roomName, name: 'Admin', isAdmin: false, adminId: socket.id }, (data) => {
             console.log(`Router RTP Capabilities... ${data.rtpCapabilities}`)
             // we assign to local variable and will be used when
             // loading the client Device (see createDevice above)
@@ -469,7 +470,7 @@ function MediaSoup() {
             } else {
                 //append to the video container
                 newElem.setAttribute('class', 'remoteVideo')
-                if (params.isAdmin) {
+                if (!params.isAdmin) {
                     newElem.innerHTML = '<video id = "' + remoteProducerId + '" autoplay class="video" ></video>'
                     host.innerText = 'Host'
                     host.style.position = 'absolute'
@@ -658,6 +659,7 @@ function MediaSoup() {
         socket.emit('producer-resume')
     }
     const [isScreenShared, setIsScreenShared] = useState(false)
+    const [answerGiven, setAnswerGiven] = useState(false)
 
     const connectSendScreenTransport = async () => {
 
@@ -717,14 +719,67 @@ function MediaSoup() {
         // streamOfUser.srcObject = null;
         // getLocalStream()
     }
+
+    const [userDetails, setUserDetails] = useState()
+    const [allReq, setAllReq] = useState([])
+    let helper = []
     useEffect(() => {
-        socket.on('permission', (data) => {
+        socket.on('permission-admin-to-user', (data) => {
             console.log('Data', data)
         })
+
+
+        socket.on('response-admin-to-user', (data) => {
+            console.log(data)
+        })
     })
+    socket.on('admin-response-to-request', (data) => {
+        console.log('Admin Respoinse', data)
+        setUserDetails({ ...data })
+        setAllReq([{ ...data }])
+        setPermissionResponseModal(true)
+
+
+        // callback({ data })
+
+    })
+
+
+    console.log('userDetails', userDetails)
+    console.log('allReq', allReq)
+
+    const [permissionResponseModal, setPermissionResponseModal] = useState(false)
+    const [permissionResponse, setPermissionResponse] = useState(false)
+
+    const answerForPermission = (answer) => {
+
+        // console.log('answer', answer)
+        if (answer) {
+            toast.success("Request Accepted!! Waiting for user...")
+            setPermissionResponseModal(false)
+        } else {
+            toast.error("Request Denied!!")
+            setPermissionResponseModal(false)
+
+        }
+        // setPermissionResponse(answer)
+        // setUserDetails((prev) => ({ ...prev, status: answer }))
+
+        const data = { for: userDetails?.data?.for, name: userDetails?.data?.name, status: answer, userId: userDetails?.data?.userId }
+        socket.emit('answer-to-request', data)
+
+
+    }
+
+
+
+    const handleTest = () => {
+        socket.emit('permission-user-to-admin', { name: 'Rohan', for: 'video', status: false, userId: socket.id })
+    }
     return (<div className="two_way_container" style={{
         display: showChat ? 'flex' : ''
     }}>
+        <Toaster />
         <div className='video_ui_container'>
             {/* <div className="users_feed"> */}
 
@@ -735,9 +790,30 @@ function MediaSoup() {
                 </div>
 
             </div>
+            {/* <button onClick={() => handleTest()}>permission</button> */}
+            {permissionResponseModal &&
+                <div id='permission_parent'>
+                    {allReq?.map((item) => {
+                        return <div className='permission-box'>
+                            <h6> {item?.data?.name} is asking for video permission for some doubt!!!
+                                <br />
+                                Do you want to allow??</h6>
+
+                            <div className="permission-buttons">
+                                <button style={{ backgroundColor: 'green' }} onClick={() => {
+                                    answerForPermission(true)
+                                }}>Accept</button>
+                                <button style={{ backgroundColor: 'red' }} onClick={() => {
+                                    answerForPermission(false)
+                                }}>Deny</button>
+                            </div>
+                        </div>
+                    })}
+                </div>
+            }
 
             {/* </div> */}
-            <LiveTabs />
+            {/* <LiveTabs /> */}
             {/* <h5>Other participants</h5> */}
             {/* <button onClick={createDevice}>Create Device</button> */}
         </div>
