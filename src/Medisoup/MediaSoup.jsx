@@ -147,7 +147,7 @@ function MediaSoup() {
 
     const joinRoom = () => {
 
-        socket.emit('joinRoom', { ...roomName, name: 'Admin', isAdmin: false, adminId: socket.id }, (data) => {
+        socket.emit('joinRoom', { ...roomName, name: 'Admin', isAdmin: true, adminId: socket.id }, (data) => {
             console.log(`Router RTP Capabilities... ${data.rtpCapabilities}`)
             // we assign to local variable and will be used when
             // loading the client Device (see createDevice above)
@@ -339,6 +339,7 @@ function MediaSoup() {
 
     const signalNewConsumerTransport = async (remoteProducerId) => {
         //check if we are already consuming the remoteProducerId
+        console.log('remoteProducerId', remoteProducerId)
         if (consumingTransports.includes(remoteProducerId)) return;
         consumingTransports.push(remoteProducerId);
 
@@ -394,7 +395,7 @@ function MediaSoup() {
 
     // server informs the client of a new producer just joined
     socket.on('new-producer', ({ producerId }) => {
-        // console.log('Not COMING')
+        console.log('Not COMING', producerId)
         signalNewConsumerTransport(producerId)
     })
 
@@ -403,7 +404,7 @@ function MediaSoup() {
             console.log('producerIds', producerIds)
             // for each of the producer create a consumer
             // producerIds.forEach(id => signalNewConsumerTransport(id))
-            producerIds.forEach(signalNewConsumerTransport)
+            producerIds.forEach(id => signalNewConsumerTransport(id.producer))
         })
     }
 
@@ -456,11 +457,13 @@ function MediaSoup() {
 
 
             console.log('remodte producer id', remoteProducerId)
+            console.log('consumer producer id', consumer)
             // create a new div element for the new consumer media
             videoContainer = document.getElementById('videoContainer')
             const newElem = document.createElement('div')
             newElem.style.position = 'relative'
             const host = document.createElement('h5')
+            // const username = document.createElement('h5')
 
             newElem.setAttribute('id', `td-${remoteProducerId}`)
 
@@ -470,21 +473,32 @@ function MediaSoup() {
             } else {
                 //append to the video container
                 newElem.setAttribute('class', 'remoteVideo')
-                if (!params.isAdmin) {
+                if (params.isAdmin) {
                     newElem.innerHTML = '<video id = "' + remoteProducerId + '" autoplay class="video" ></video>'
                     host.innerText = 'Host'
+                    // host.innerText = params.name
                     host.style.position = 'absolute'
                     host.style.color = '#ffffff8f'
                     host.style.top = '0px'
                     host.style.right = '30px'
                     host.style.background = '#80808073'
-                    host.style.padding = '2px 5px'
+                    // host.style.padding = '2px 5px'
                     host.style.borderRadius = '5px'
 
                     newElem.appendChild(host)
                 }
                 else {
                     newElem.innerHTML = '<video id = "' + remoteProducerId + '" autoplay class="video" ></video>'
+                    host.innerText = params.name
+                    host.style.position = 'absolute'
+                    host.style.color = '#ffffff8f'
+                    host.style.top = '0px'
+                    host.style.right = '30px'
+                    host.style.background = '#80808073'
+                    // host.style.padding = '2px 5px'
+                    host.style.borderRadius = '5px'
+
+                    newElem.appendChild(host)
                 }
             }
 
@@ -745,8 +759,10 @@ function MediaSoup() {
     })
 
 
-    console.log('userDetails', userDetails)
-    console.log('allReq', allReq)
+    // console.log('userDetails', userDetails)
+    // console.log('allReq', allReq)
+
+
 
     const [permissionResponseModal, setPermissionResponseModal] = useState(false)
     const [permissionResponse, setPermissionResponse] = useState(false)
@@ -771,7 +787,7 @@ function MediaSoup() {
 
     }
 
-
+    const [isMicOn, setIsMicOn] = useState(false)
 
     const handleTest = () => {
         socket.emit('permission-user-to-admin', { name: 'Rohan', for: 'video', status: false, userId: socket.id })
@@ -786,7 +802,9 @@ function MediaSoup() {
             <div id="videoContainer">
                 <video id='screenSharing' autoPlay muted style={{ width: '950px', display: isScreenShared ? "" : 'none', marginLeft: '0px', height: '500px', background: 'red' }} ></video>
 
-                <div id="localVideoContainer" style={{ width: onlyProducer ? '100%' : '' }}>   <video id="localVideo" autoPlay className="video" muted style={{ minWidth: isScreenShared ? '200px' : "90%", maxWidth: isScreenShared ? '200px' : "90%", height: isScreenShared && '200px', position: isScreenShared ? 'absolute' : '', right: '50px', bottom: '25%' }}></video>
+                <div id="localVideoContainer" style={{}}>
+                    <span className='host-tag'>Host</span>
+                    <video id="localVideo" autoPlay className="video" muted style={{ minWidth: isScreenShared ? '200px' : "90%", maxWidth: isScreenShared ? '200px' : "90%", height: isScreenShared && '200px', position: isScreenShared ? 'absolute' : '', right: '50px', bottom: '25%' }}></video>
                 </div>
 
             </div>
@@ -829,6 +847,10 @@ function MediaSoup() {
             startCapture={startCapture}
             stopCapture={stopCapture}
             isScreenShared={isScreenShared}
+        //  setIsCameraOn={setIsCameraOn}
+        //         isCameraOn={isCameraOn}
+        //         setIsMicOn={setIsMicOn}
+        //         isMicOn={isMicOn}
 
         // streamOfUser={streamOfUser}
         />
@@ -841,6 +863,10 @@ function MediaSoup() {
                     mySocketId={mySocketId}
                     participantsList={participantsListOfUser}
                     socket={socket}
+                    // setIsCameraOn={setIsCameraOn}
+                    // isCameraOn={isCameraOn}
+                    setIsMicOn={setIsMicOn}
+                    isMicOn={isMicOn}
                 />
             </div>
         }

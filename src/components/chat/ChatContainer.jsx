@@ -4,18 +4,21 @@ import EmojiEmotionsIcon from '@mui/icons-material/EmojiEmotions';
 import SendIcon from '@mui/icons-material/Send';
 import SearchIcon from '@mui/icons-material/Search';
 import { Avatar, Stack, Typography } from "@mui/material";
-import MicIcon from '@mui/icons-material/Mic';
-// import MoreVertIcon from '@mui/icons-material/MoreVert';
+
 import VideocamIcon from '@mui/icons-material/Videocam';
 import VideocamOffIcon from '@mui/icons-material/VideocamOff';
+import MicIcon from '@mui/icons-material/Mic';
+import MicOffIcon from '@mui/icons-material/MicOff';
 
-
-const ChatContainer = ({ showParticipantsDirectly, sendMessage, msgList, mySocketId, participantsList, socket }) => {
+const ChatContainer = ({ showParticipantsDirectly, sendMessage, msgList, mySocketId, participantsList, socket, setIsMicOn, isMicOn }) => {
 
     console.log('participnat List in conatiner', participantsList)
 
     const [showParticipants, setShowParticipants] = useState(showParticipantsDirectly)
     const [msg, setMsg] = useState('')
+
+
+
     const handleSendMessage = (e) => {
 
         const { value } = e.target;
@@ -32,13 +35,15 @@ const ChatContainer = ({ showParticipantsDirectly, sendMessage, msgList, mySocke
         }
     }
 
+    // const [isMicOn, setIsMicOn] = useState(false)
     const [isCameraOn, setIsCameraOn] = useState(false)
     const [clickedId, setClickedId] = useState('')
     const handleCamera = (id) => {
-        socket.emit('handle-user-camera', ({ userId: id.id, status: !isCameraOn }))
-
+        socket.emit('handle-user-camera', ({ userId: id.id, status: !isCameraOn, for: 'video' }))
     }
-
+    const handleMic = (id) => {
+        socket.emit('handle-user-mic', ({ userId: id.id, status: !isMicOn, for: 'audio' }))
+    }
 
 
     return (
@@ -53,7 +58,7 @@ const ChatContainer = ({ showParticipantsDirectly, sendMessage, msgList, mySocke
                 <div className="participant_section" onClick={() => {
                     setShowParticipants(true)
                 }}>
-                    <div style={{ background: showParticipants ? 'white' : "#b042f5", color: showParticipants ? 'black' : "white" }}>Participant</div>
+                    <div style={{ background: showParticipants ? 'white' : "#b042f5", color: showParticipants ? 'black' : "white" }}>Participant ({participantsList.length})</div>
                 </div>
             </div>
             {showParticipants ? <div className="participants_container" >
@@ -83,6 +88,7 @@ const ChatContainer = ({ showParticipantsDirectly, sendMessage, msgList, mySocke
                 </div>
                 <div className="participant_list" style={{ marginTop: '50px', width: '295px', }}>
                     {participantsList?.map((item, index) => {
+
                         return <div key={index} className="particular_participant" style={{ borderRadius: '10px' }} onClick={() => setClickedId(item.id)}>
                             <div className="particular_participant_left">
                                 <Avatar sx={{ borderRadius: '10px', height: 30 }} />
@@ -93,13 +99,21 @@ const ChatContainer = ({ showParticipantsDirectly, sendMessage, msgList, mySocke
                                 </div>
                             </div>
                             <div className="particular_participant_right">
-                                {isCameraOn && item.id == clickedId ? <VideocamIcon onClick={() => {
+                                {item?.videoStatus ? <VideocamIcon sx={{ cursor: 'pointer' }} onClick={() => {
 
                                     setIsCameraOn(!isCameraOn)
                                     handleCamera(item)
-                                }} /> : <VideocamOffIcon onClick={() => {
+                                }} /> : <VideocamOffIcon sx={{ cursor: 'pointer' }} onClick={() => {
                                     setIsCameraOn(!isCameraOn)
                                     handleCamera(item)
+                                }} />}
+                                {item?.audioStatus ? <MicIcon sx={{ cursor: 'pointer' }} onClick={() => {
+
+                                    setIsMicOn(!isMicOn)
+                                    handleMic(item)
+                                }} /> : <MicOffIcon sx={{ cursor: 'pointer' }} onClick={() => {
+                                    setIsMicOn(!isMicOn)
+                                    handleMic(item)
                                 }} />}
                             </div>
 
@@ -163,9 +177,10 @@ const ChatContainer = ({ showParticipantsDirectly, sendMessage, msgList, mySocke
                 <div className="chat_container_chats" >
                     <Stack sx={{ overflowY: 'scroll', minHeight: '60vh', maxHeight: '60vh' }}>
                         {msgList?.length > 0 ? msgList?.map((item, index) => {
+                            console.log('msglist', item)
                             return <Stack>
-                                {item?.id == mySocketId ? <Typography key={index} ><span style={{ color: 'green' }}>{item?.id}</span>
-                                    :{item?.msg}</Typography> : <Typography>{item?.id}:{item?.msg}</Typography>}
+                                {item?.id == mySocketId ? <Typography key={index} ><span style={{ color: 'green' }}>{item?.name}</span>
+                                    :{item?.msg}</Typography> : <Typography>{item?.name}:{item?.msg}</Typography>}
                             </Stack>
                             // <Typography></Typography>
                         }) : 'Enter Something...'}

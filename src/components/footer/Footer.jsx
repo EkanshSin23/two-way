@@ -19,6 +19,8 @@ import EmojiPicker from 'emoji-picker-react';
 const Footer = ({ showChat, setShowChat, setShowParticipants, showParticipants, stopCamera, isScreenShared, playCamera, stopAudio, playAudio, startCapture, stopCapture, isCameraOnFromScreenShare }) => {
 
 
+
+
     const handleChatParticipants = () => {
         setShowChat(!showChat)
         setShowParticipants(true)
@@ -80,7 +82,7 @@ const Footer = ({ showChat, setShowChat, setShowParticipants, showParticipants, 
 
                 </div >
                 <div className="footer_middle">
-                    <div className="footer_screenshare" style={{ borderColor: 'gray' }}>
+                    {/* <div className="footer_screenshare" style={{ borderColor: 'gray' }}>
                         {!isScreenShared ? <div style={{ borderRight: '1px solid black', padding: '10px 10px' }} onClick={() => {
                             startCapture(displayMediaOptions)
                             setIsSSOn(false)
@@ -94,7 +96,7 @@ const Footer = ({ showChat, setShowChat, setShowParticipants, showParticipants, 
                         }
                         <div style={{ padding: '10px 10px' }}><MoreVertIcon sx={{ color: 'gray' }} /></div>
 
-                    </div>
+                    </div> */}
                     <div className="footer_emoji" style={{ borderColor: 'gray' }} onClick={() => setShowEmoji(!showEmoji)}>
 
                         <div style={{ padding: '10px 10px' }}><EmojiEmotionsIcon sx={{ color: 'gray' }} /></div>
