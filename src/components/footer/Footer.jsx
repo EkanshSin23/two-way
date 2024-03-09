@@ -16,7 +16,7 @@ import StopScreenShareIcon from '@mui/icons-material/StopScreenShare';
 import EmojiPicker from 'emoji-picker-react';
 
 
-const Footer = ({ showChat, setShowChat, setShowParticipants, showParticipants, stopCamera, isScreenShared, playCamera, stopAudio, playAudio, startCapture, stopCapture, isCameraOnFromScreenShare }) => {
+const Footer = ({ showChat, setShowChat, setShowParticipants, showParticipants, stopCamera, isScreenShared, playCamera, stopAudio, playAudio, startCapture, stopCapture, isCameraOnFromScreenShare, audioPause, audioResume, socket }) => {
 
 
 
@@ -28,7 +28,7 @@ const Footer = ({ showChat, setShowChat, setShowParticipants, showParticipants, 
 
 
     const [isCameraOn, setIsCameraOn] = useState(true)
-    const [isMicOn, setIsMicOn] = useState(true)
+    const [isMicOn, setIsMicOn] = useState(false)
     const [isSSOn, setIsSSOn] = useState(true)
     const [showEmoji, setShowEmoji] = useState(false)
     const displayMediaOptions = {
@@ -57,10 +57,12 @@ const Footer = ({ showChat, setShowChat, setShowParticipants, showParticipants, 
                         {isMicOn ? <div style={{ borderRight: '1px solid black', padding: '10px 10px' }} onClick={() => {
                             stopAudio()
                             setIsMicOn(false)
+                            audioPause({ id: socket.id })
                         }}><MicIcon sx={{ color: 'gray' }} /></div> :
                             <div style={{ borderRight: '1px solid black', padding: '10px 10px' }} onClick={() => {
                                 playAudio()
                                 setIsMicOn(true)
+                                audioResume({ id: socket.id })
                             }}>  <MicOffIcon /></div>}
                         <div style={{ padding: '10px 10px' }}><MoreVertIcon sx={{ color: 'gray' }} /></div>
 

@@ -10,11 +10,13 @@ import VideocamOffIcon from '@mui/icons-material/VideocamOff';
 import MicIcon from '@mui/icons-material/Mic';
 import MicOffIcon from '@mui/icons-material/MicOff';
 
-const ChatContainer = ({ showParticipantsDirectly, sendMessage, msgList, mySocketId, participantsList, socket, setIsMicOn, isMicOn }) => {
+const ChatContainer = ({ showParticipantsDirectly, audioPause, audioResume, roomName, sendMessage, msgList, mySocketId, participantsList, socket, setIsMicOn, isMicOn }) => {
 
     console.log('participnat List in conatiner', participantsList)
 
     const [showParticipants, setShowParticipants] = useState(showParticipantsDirectly)
+    const [roomNameOfUser, setRoomNameOfUser] = useState('all')
+    const [reply, setReply] = useState(false)
     const [msg, setMsg] = useState('')
 
 
@@ -27,7 +29,7 @@ const ChatContainer = ({ showParticipantsDirectly, sendMessage, msgList, mySocke
     }
     const handleSend = () => {
         if (msg !== '') {
-            sendMessage({ name: `Rohan-${msg} `, msg: msg })
+            sendMessage({ name: `Rohan-${msg} `, msg: msg, roomNameOfUser: roomNameOfUser })
             setMsg('')
         }
         else {
@@ -35,16 +37,20 @@ const ChatContainer = ({ showParticipantsDirectly, sendMessage, msgList, mySocke
         }
     }
 
+    console.log('roomNameOfUser', roomNameOfUser)
     // const [isMicOn, setIsMicOn] = useState(false)
     const [isCameraOn, setIsCameraOn] = useState(false)
     const [clickedId, setClickedId] = useState('')
     const handleCamera = (id) => {
-        socket.emit('handle-user-camera', ({ userId: id.id, status: !isCameraOn, for: 'video' }))
+        socket.emit('handle-user-camera', ({ userId: id.id, status: !isCameraOn, for: 'video', roomName: roomName }))
     }
     const handleMic = (id) => {
-        socket.emit('handle-user-mic', ({ userId: id.id, status: !isMicOn, for: 'audio' }))
+        socket.emit('handle-user-mic', ({ userId: id.id, status: !isMicOn, for: 'audio', roomName: roomName }))
     }
 
+
+
+    console.log('mSGList', msgList)
 
     return (
         <div className="chat_parent_container">
@@ -88,7 +94,8 @@ const ChatContainer = ({ showParticipantsDirectly, sendMessage, msgList, mySocke
                 </div>
                 <div className="participant_list" style={{ marginTop: '50px', width: '295px', }}>
                     {participantsList?.map((item, index) => {
-
+                        console.log(socket.id)
+                        console.log(item?.id)
                         return <div key={index} className="particular_participant" style={{ borderRadius: '10px' }} onClick={() => setClickedId(item.id)}>
                             <div className="particular_participant_left">
                                 <Avatar sx={{ borderRadius: '10px', height: 30 }} />
@@ -98,7 +105,7 @@ const ChatContainer = ({ showParticipantsDirectly, sendMessage, msgList, mySocke
 
                                 </div>
                             </div>
-                            <div className="particular_participant_right">
+                            {socket.id !== item?.id && < div className="particular_participant_right">
                                 {item?.videoStatus ? <VideocamIcon sx={{ cursor: 'pointer' }} onClick={() => {
 
                                     setIsCameraOn(!isCameraOn)
@@ -108,14 +115,17 @@ const ChatContainer = ({ showParticipantsDirectly, sendMessage, msgList, mySocke
                                     handleCamera(item)
                                 }} />}
                                 {item?.audioStatus ? <MicIcon sx={{ cursor: 'pointer' }} onClick={() => {
-
+                                    audioPause(item)
                                     setIsMicOn(!isMicOn)
                                     handleMic(item)
                                 }} /> : <MicOffIcon sx={{ cursor: 'pointer' }} onClick={() => {
+
+                                    audioResume(item)
                                     setIsMicOn(!isMicOn)
                                     handleMic(item)
                                 }} />}
                             </div>
+                            }
 
                         </div>
                     })}
@@ -179,8 +189,26 @@ const ChatContainer = ({ showParticipantsDirectly, sendMessage, msgList, mySocke
                         {msgList?.length > 0 ? msgList?.map((item, index) => {
                             console.log('msglist', item)
                             return <Stack>
-                                {item?.id == mySocketId ? <Typography key={index} ><span style={{ color: 'green' }}>{item?.name}</span>
-                                    :{item?.msg}</Typography> : <Typography>{item?.name}:{item?.msg}</Typography>}
+                                {item?.id == mySocketId ? <Typography key={index} ><span style={{ color: 'green' }}><span style={{ color: 'red' }}>({item?.roomName?.roomName})</span>{item?.name}</span>
+                                    :{item?.msg}</Typography> : <div> <Typography onMouseEnter={() => {
+                                        setReply(true)
+                                    }}
+                                        onMouseLeave={() => {
+                                            setReply(false)
+                                        }}
+                                        className="usermessage"><span style={{ color: 'red' }}>({item?.roomName?.roomName})</span>{item?.name}:{item?.msg}</Typography>
+
+                                    <span className="reply" style={{ display: reply ? '' : 'none' }} onMouseEnter={() => {
+                                        setReply(true)
+                                    }}
+                                        onMouseLeave={() => {
+                                            setReply(false)
+                                        }}
+                                        onClick={() => {
+                                            setRoomNameOfUser(item.roomName.roomName)
+                                        }}> Reply</span>
+                                </div>
+                                }
                             </Stack>
                             // <Typography></Typography>
                         }) : 'Enter Something...'}

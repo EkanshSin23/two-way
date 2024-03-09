@@ -122,3 +122,27 @@
     /* margin-top: 50px; */
 
 }
+
+.usermessage {
+    cursor: pointer;
+    position: relative;
+    transition: all 0.2s;
+}
+
+.usermessage:hover {
+    border-radius: 5px;
+    background: lightgray;
+    /* color: lig; */
+}
+
+.reply {
+    cursor: pointer;
+    border: 0.5px solid gray;
+    border-radius: 5px;
+    font-size: 12px;
+    padding: 5px 10px;
+    color: gray;
+    font-weight: 600;
+    position: absolute;
+    right: 40%;
+}

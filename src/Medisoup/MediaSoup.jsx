@@ -147,7 +147,7 @@ function MediaSoup() {
 
     const joinRoom = () => {
 
-        socket.emit('joinRoom', { ...roomName, name: 'Admin', isAdmin: true, adminId: socket.id }, (data) => {
+        socket.emit('joinRoom', { roomName: ['dynamic', 'lecture'], name: 'Admin', isAdmin: true, adminId: socket.id }, (data) => {
             console.log(`Router RTP Capabilities... ${data.rtpCapabilities}`)
             // we assign to local variable and will be used when
             // loading the client Device (see createDevice above)
@@ -617,7 +617,7 @@ function MediaSoup() {
     }
     let mySocketId = socket.id
     const sendMessage = (info) => {
-        socket.emit('send-message', { ...info, id: socket.id })
+        socket.emit('send-message', { ...info, id: socket.id, roomName })
     }
 
     function stopAudio() {
@@ -758,6 +758,13 @@ function MediaSoup() {
 
     })
 
+    socket.on('server-producer-resume', (data) => {
+        console.log('server-producer-resume', data)
+    })
+    socket.on('server-producer-pause', (data) => {
+        console.log('server-producer-pause', data)
+    })
+
 
     // console.log('userDetails', userDetails)
     // console.log('allReq', allReq)
@@ -792,6 +799,19 @@ function MediaSoup() {
     const handleTest = () => {
         socket.emit('permission-user-to-admin', { name: 'Rohan', for: 'video', status: false, userId: socket.id })
     }
+
+
+
+    const audioPause = (id) => {
+        socket.emit('audio-pause', id)
+    }
+    const audioResume = (id) => {
+        socket.emit('audio-resume', id)
+    }
+    const audioStat = () => {
+        socket.emit('audio-stat', '1234')
+    }
+
     return (<div className="two_way_container" style={{
         display: showChat ? 'flex' : ''
     }}>
@@ -809,6 +829,9 @@ function MediaSoup() {
 
             </div>
             {/* <button onClick={() => handleTest()}>permission</button> */}
+            {/* <button onClick={() => audioPause({ id: socket.id })}>audioPause</button> */}
+            {/* <button onClick={() => audioResume({ id: socket.id })}>audioResume</button> */}
+            {/* <button onClick={() => audioStat()}>audioStat</button> */}
             {permissionResponseModal &&
                 <div id='permission_parent'>
                     {allReq?.map((item) => {
@@ -847,6 +870,9 @@ function MediaSoup() {
             startCapture={startCapture}
             stopCapture={stopCapture}
             isScreenShared={isScreenShared}
+            audioPause={audioPause}
+            audioResume={audioResume}
+            socket={socket}
         //  setIsCameraOn={setIsCameraOn}
         //         isCameraOn={isCameraOn}
         //         setIsMicOn={setIsMicOn}
@@ -863,10 +889,15 @@ function MediaSoup() {
                     mySocketId={mySocketId}
                     participantsList={participantsListOfUser}
                     socket={socket}
+                    roomName={roomName}
                     // setIsCameraOn={setIsCameraOn}
                     // isCameraOn={isCameraOn}
                     setIsMicOn={setIsMicOn}
                     isMicOn={isMicOn}
+                    audioPause={audioPause}
+                    audioResume={audioResume}
+
+
                 />
             </div>
         }
