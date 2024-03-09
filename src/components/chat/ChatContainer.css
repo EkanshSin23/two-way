@@ -19,7 +19,7 @@
     justify-content: center;
     gap: 20px;
     position: absolute;
-    top: 20px;
+    top: 50px;
     left: 50px;
     width: 70%;
     padding: 3px;
@@ -145,4 +145,19 @@
     font-weight: 600;
     position: absolute;
     right: 40%;
+}
+
+.filter {
+    border-bottom: 1px solid black;
+    padding: 10px 0px 0;
+    display: flex;
+    justify-content: space-between;
+    cursor: pointer;
+}
+
+.filter-value {
+    font-weight: 600;
+    font-size: 18px;
+    text-align: left;
+    display: block;
 }

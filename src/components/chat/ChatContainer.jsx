@@ -9,15 +9,21 @@ import VideocamIcon from '@mui/icons-material/Videocam';
 import VideocamOffIcon from '@mui/icons-material/VideocamOff';
 import MicIcon from '@mui/icons-material/Mic';
 import MicOffIcon from '@mui/icons-material/MicOff';
+import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
+import ArrowDropUpIcon from '@mui/icons-material/ArrowDropUp';
+import FilterSection from "./components/FilterSection";
 
 const ChatContainer = ({ showParticipantsDirectly, audioPause, audioResume, roomName, sendMessage, msgList, mySocketId, participantsList, socket, setIsMicOn, isMicOn }) => {
 
     console.log('participnat List in conatiner', participantsList)
 
     const [showParticipants, setShowParticipants] = useState(showParticipantsDirectly)
-    const [roomNameOfUser, setRoomNameOfUser] = useState('all')
+    const [roomNameOfUser, setRoomNameOfUser] = useState(['dynamic', 'room'])
     const [reply, setReply] = useState(false)
     const [msg, setMsg] = useState('')
+    const [selectedFilter, setSelectedFilter] = useState({
+        batch: 'All', lecture: '', room: ''
+    })
 
 
 
@@ -49,11 +55,15 @@ const ChatContainer = ({ showParticipantsDirectly, audioPause, audioResume, room
     }
 
 
-
-    console.log('mSGList', msgList)
-
+    const [filterOpen, setFilterOpen] = useState(false)
     return (
         <div className="chat_parent_container">
+            <div className="filter" >
+                <span className="filter-value">{`${selectedFilter?.batch}${selectedFilter?.lecture !== '' ? `>${selectedFilter?.lecture}` : ''}${selectedFilter?.room !== '' ? `>${selectedFilter?.room}` : ''}`}</span>
+                {filterOpen ? <ArrowDropUpIcon onClick={() => { setFilterOpen(!filterOpen) }} /> : <ArrowDropDownIcon onClick={() => { setFilterOpen(!filterOpen) }} />}
+                {filterOpen && <FilterSection filterOpen={filterOpen} setFilterOpen={setFilterOpen} setSelectedFilter={setSelectedFilter} />}
+
+            </div>
             <div className="chat_top">
 
                 <div className="chat_section" onClick={() => {
@@ -68,7 +78,8 @@ const ChatContainer = ({ showParticipantsDirectly, audioPause, audioResume, room
                 </div>
             </div>
             {showParticipants ? <div className="participants_container" >
-                <div className="particpants_container_participants" >
+
+                <div className="particpants_cointainer_participants" >
 
 
                     <div className="participant_search_box" style={{
@@ -185,6 +196,8 @@ const ChatContainer = ({ showParticipantsDirectly, audioPause, audioResume, room
                 </div>
             </div> :
                 <div className="chat_container_chats" >
+
+
                     <Stack sx={{ overflowY: 'scroll', minHeight: '60vh', maxHeight: '60vh' }}>
                         {msgList?.length > 0 ? msgList?.map((item, index) => {
                             console.log('msglist', item)
@@ -213,6 +226,8 @@ const ChatContainer = ({ showParticipantsDirectly, audioPause, audioResume, room
                             // <Typography></Typography>
                         }) : 'Enter Something...'}
                     </Stack>
+
+                    <div className="to-box">To :{`${selectedFilter?.batch}${selectedFilter?.lecture !== '' ? `>${selectedFilter?.lecture}` : ''}`}</div>
                     < div className="input_box" style={{
                         borderRadius: '10px',
                         position: 'absolute'

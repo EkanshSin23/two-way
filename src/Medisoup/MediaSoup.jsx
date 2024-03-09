@@ -555,7 +555,10 @@ function MediaSoup() {
 
     useEffect(() => {
         socket.emit('chat-room', ('room'))
-        socket.on('recieve-message', (data) => {
+        // socket.on('recieve-message', (data) => {
+        //     setMsgList((prev) => [...prev, data])
+        // })
+        socket.on('recieve-message-for-admin', (data) => {
             setMsgList((prev) => [...prev, data])
         })
         socket.on('users-status', (data) => {
@@ -882,6 +885,7 @@ function MediaSoup() {
         />
         {
             showChat && <div className='chat_container' >
+                {/* // true && <div className='chat_container' > */}
                 <ChatContainer
                     showParticipantsDirectly={showParticipants}
                     sendMessage={sendMessage}
